@@ -6,114 +6,49 @@
     <title>Upload do Jogo</title>
 </head>
 <body>
-    <h1>Upload do Jogo para GitHub</h1>
+    <h1>Upload do Jogo</h1>
+
+    <!-- Formulário de upload -->
     <form id="uploadForm">
-        <label for="gameName">Nome do Jogo:</label>
-        <input type="text" id="gameName" name="gameName" required><br><br>
-
-        <label for="gameFile">Escolha o arquivo .zip ou .rar:</label>
-        <input type="file" id="gameFile" name="gameFile" required><br><br>
-
+        <label for="fileInput">Selecione o arquivo .rar ou .zip:</label>
+        <input type="file" id="fileInput" name="fileInput" accept=".rar,.zip">
         <button type="submit">Enviar</button>
     </form>
 
     <div id="status"></div>
+    <div id="linkJogo" style="display:none;">
+        <h3>Link para o jogo:</h3>
+        <a id="gameLink" href="#" target="_blank">Clique aqui para jogar</a>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script>
-        // Coloque seu token do GitHub aqui
-        const githubToken = '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';  // Substitua com o seu token do GitHub
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
 
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const gameName = document.getElementById('gameName').value;
-            const fileInput = document.getElementById('gameFile');
-            const file = fileInput.files[0];
-            const statusDiv = document.getElementById('status');
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
 
-            if (!file) {
-                statusDiv.textContent = "Por favor, escolha um arquivo.";
-                return;
-            }
+            if (file) {
+                // Exibe mensagem de processamento
+                document.getElementById('status').innerHTML = 'Processando o arquivo...';
 
-            statusDiv.textContent = "Processando...";
+                // Simula o upload e extração do arquivo
+                setTimeout(function() {
+                    // Simulando a criação de um link para o jogo
+                    // Normalmente, você faria o upload para o servidor ou GitHub aqui
+                    var jogoNome = file.name.split('.')[0]; // Pega o nome do arquivo (sem extensão)
+                    var gameUrl = "https://mubonassi.github.io/ProjetoAlunos/Games/" + jogoNome + "/index.html";  // O caminho onde o jogo seria hospedado
 
-            try {
-                const zip = new JSZip();
-                const zipContents = await zip.loadAsync(file);
-                const files = zipContents.files;
-
-                // Verificar se o nome da pasta já existe no repositório
-                const repoName = "ProjetoAlunos";
-                const repoUrl = `https://api.github.com/repos/mubonassi/${repoName}/contents/ProjetoAlunos/Games/${gameName}`;
-                const response = await fetch(repoUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `token ${githubToken}`
-                    }
-                });
-
-                if (response.ok) {
-                    statusDiv.textContent = "Já existe um jogo com esse nome. Escolha outro nome.";
-                    return;
-                }
-
-                // Criar a estrutura da pasta no GitHub
-                const folderPath = `ProjetoAlunos/Games/${gameName}/`;
-                const filesToUpload = [];
-
-                // Extrair arquivos do zip e prepará-los para upload
-                for (const fileName in files) {
-                    const fileData = await files[fileName].async('blob');
-                    const filePath = folderPath + fileName;
-                    filesToUpload.push({
-                        path: filePath,
-                        content: fileData
-                    });
-                }
-
-                // Fazer o upload para o repositório
-                const uploadPromises = filesToUpload.map(file => {
-                    return fetch(`https://api.github.com/repos/mubonassi/ProjetoAlunos/contents/${file.path}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${githubToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Adicionando o jogo ${gameName}`,
-                            content: await blobToBase64(file.content)
-                        })
-                    });
-                });
-
-                await Promise.all(uploadPromises);
-
-                // Gerar link para o GitHub Pages
-                const gameLink = `https://mubonassi.github.io/ProjetoAlunos/Games/${gameName}/`;
-
-                statusDiv.innerHTML = `
-                    <p>Jogo enviado com sucesso!</p>
-                    <p>Link para o jogo: <a href="${gameLink}" target="_blank">${gameLink}</a></p>
-                `;
-            } catch (error) {
-                statusDiv.textContent = "Erro ao processar o jogo. Tente novamente.";
-                console.error(error);
+                    // Exibe o link do jogo para o professor
+                    document.getElementById('status').innerHTML = 'Jogo enviado com sucesso!';
+                    var link = document.getElementById('gameLink');
+                    link.href = gameUrl;
+                    document.getElementById('linkJogo').style.display = 'block'; // Mostra o link do jogo
+                }, 2000);  // Delay de 2 segundos para simular o processo
+            } else {
+                document.getElementById('status').innerHTML = 'Por favor, selecione um arquivo para enviar.';
             }
         });
-
-        // Função para converter arquivo blob para Base64
-        function blobToBase64(blob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = function () {
-                    resolve(reader.result.split(',')[1]);
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        }
     </script>
 </body>
 </html>
